@@ -1,4 +1,3 @@
-
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
@@ -27,6 +26,7 @@ const loginAttempts = new Map();
 
 async function loadDonations() {
   await fs.mkdir(DATA_DIR, { recursive: true });
+
   try {
     const data = await fs.readFile(DATA_FILE, "utf8");
     donations = JSON.parse(data);
@@ -56,12 +56,15 @@ function createSession() {
   const payload = Buffer.from(JSON.stringify({
     expires: Date.now() + SESSION_DURATION
   })).toString("base64url");
+
   return payload + "." + sign(payload);
 }
 
 function validSession(req) {
-  const cookie = (req.headers.cookie || "").split("; ")
-    .find((item) => item.startsWith("mh_admin="));
+  const cookie = (req.headers.cookie || "")
+    .split("; ")
+    .find(item => item.startsWith("mh_admin="));
+
   if (!cookie) return false;
 
   const parts = cookie.slice("mh_admin=".length).split(".");
@@ -91,8 +94,18 @@ function requireAdmin(req, res, next) {
 
 function verifiedTotal() {
   return donations
-    .filter((d) => d.status === "verified")
+    .filter(d => d.status === "verified")
     .reduce((sum, d) => sum + d.amount, 0);
+}
+
+function publicDonation(d) {
+  return {
+    name: d.publicConsent ? d.name : "",
+    amount: d.amount,
+    showName: d.publicConsent,
+    verifiedAt: d.verifiedAt,
+    createdAt: d.createdAt
+  };
 }
 
 app.get("/", (req, res) => {
@@ -103,9 +116,10 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
+// Submit a donation for manual verification.
 app.post("/api/donations", async (req, res, next) => {
   try {
-    const { name, amount, paymentMethod, reference, publicConsent } = req.body || {};
+    const { name, amount, paymentMethod, reference, showName, publicConsent } = req.body || {};
     const value = Number(amount);
 
     if (
@@ -113,7 +127,7 @@ app.post("/api/donations", async (req, res, next) => {
       name.trim().length < 2 ||
       name.trim().length > 100 ||
       !Number.isFinite(value) ||
-      value <= 0 ||
+      value < 100 ||
       value > 1000000000 ||
       typeof paymentMethod !== "string" ||
       paymentMethod.trim().length < 2 ||
@@ -129,14 +143,20 @@ app.post("/api/donations", async (req, res, next) => {
       amount: value,
       paymentMethod: paymentMethod.trim(),
       reference: typeof reference === "string" ? reference.trim().slice(0, 100) : "",
-      publicConsent: publicConsent === true,
+      publicConsent: showName === true || publicConsent === true,
       status: "pending",
       createdAt: new Date().toISOString(),
       verifiedAt: null
     };
 
     donations.push(donation);
-    await saveDonations();
+
+    try {
+      await saveDonations();
+    } catch (error) {
+      donations = donations.filter(d => d.id !== donation.id);
+      throw error;
+    }
 
     res.status(201).json({
       message: "Donation submitted for review.",
@@ -148,16 +168,17 @@ app.post("/api/donations", async (req, res, next) => {
   }
 });
 
+// Public endpoint: only verified donations and consented names are shown.
 app.get("/api/donations", (req, res) => {
-  const publicDonations = donations
-    .filter((d) => d.status === "verified" && d.publicConsent)
-    .map((d) => ({
-      name: d.name,
-      amount: d.amount,
-      verifiedAt: d.verifiedAt
-    }));
+  const verified = donations.filter(d => d.status === "verified");
 
-  res.json({ total: verifiedTotal(), donations: publicDonations });
+  res.set("Cache-Control", "no-store");
+  res.json({
+    total: verifiedTotal(),
+    totalAmount: verifiedTotal(),
+    donationCount: verified.length,
+    donations: verified.map(publicDonation)
+  });
 });
 
 app.post("/api/admin/login", (req, res) => {
@@ -184,10 +205,12 @@ app.post("/api/admin/login", (req, res) => {
   }
 
   loginAttempts.delete(ip);
+
   res.setHeader(
     "Set-Cookie",
     `mh_admin=${createSession()}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=7200`
   );
+
   res.json({ message: "Login successful." });
 });
 
@@ -196,24 +219,41 @@ app.post("/api/admin/logout", (req, res) => {
     "Set-Cookie",
     "mh_admin=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0"
   );
+
   res.json({ message: "Logged out." });
 });
 
 app.get("/api/admin/donations", requireAdmin, (req, res) => {
-  res.json({ donations, totalVerified: verifiedTotal() });
+  res.set("Cache-Control", "no-store");
+  res.json({
+    donations,
+    totalVerified: verifiedTotal()
+  });
 });
 
 app.post("/api/admin/donations/:id/verify", requireAdmin, async (req, res, next) => {
   try {
-    const donation = donations.find((d) => d.id === req.params.id);
-    if (!donation) return res.status(404).json({ error: "Donation not found." });
+    const donation = donations.find(d => d.id === req.params.id);
+
+    if (!donation) {
+      return res.status(404).json({ error: "Donation not found." });
+    }
+
     if (donation.status !== "pending") {
       return res.status(409).json({ error: "Donation has already been reviewed." });
     }
 
+    // Verify the actual payment in your mobile-money or bank account first.
     donation.status = "verified";
     donation.verifiedAt = new Date().toISOString();
-    await saveDonations();
+
+    try {
+      await saveDonations();
+    } catch (error) {
+      donation.status = "pending";
+      donation.verifiedAt = null;
+      throw error;
+    }
 
     res.json({
       message: "Donation verified.",
@@ -227,14 +267,25 @@ app.post("/api/admin/donations/:id/verify", requireAdmin, async (req, res, next)
 
 app.post("/api/admin/donations/:id/reject", requireAdmin, async (req, res, next) => {
   try {
-    const donation = donations.find((d) => d.id === req.params.id);
-    if (!donation) return res.status(404).json({ error: "Donation not found." });
+    const donation = donations.find(d => d.id === req.params.id);
+
+    if (!donation) {
+      return res.status(404).json({ error: "Donation not found." });
+    }
+
     if (donation.status !== "pending") {
       return res.status(409).json({ error: "Donation has already been reviewed." });
     }
 
     donation.status = "rejected";
-    await saveDonations();
+
+    try {
+      await saveDonations();
+    } catch (error) {
+      donation.status = "pending";
+      throw error;
+    }
+
     res.json({ message: "Donation rejected." });
   } catch (error) {
     next(error);
@@ -253,7 +304,7 @@ loadDonations()
       console.log(`Matendo ya Huruma running on port ${PORT}`);
     });
   })
-  .catch((error) => {
+  .catch(error => {
     console.error("Failed to load donations:", error);
     process.exit(1);
   });
