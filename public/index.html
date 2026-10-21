@@ -3,90 +3,684 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matendo ya Huruma</title>
+  <meta name="theme-color" content="#087443">
+  <meta name="description" content="Matendo ya Huruma — Ungana nasi kusaidia watoto yatima na watu wenye uhitaji.">
+  <title>Matendo ya Huruma | Changia Matumaini</title>
   <style>
+    :root {
+      --green: #087443;
+      --dark: #064e30;
+      --gold: #f4bd43;
+      --light: #f4f8f5;
+      --text: #20352a;
+      --muted: #64756a;
+      --white: #fff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f8f5;
-      color: #24352b;
+      background: var(--light);
+      color: var(--text);
+      line-height: 1.6;
     }
     header {
-      background: #087443;
-      color: white;
-      text-align: center;
-      padding: 28px 15px;
+      background: var(--white);
+      padding: 13px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 12px #0000000c;
     }
-    header h1 { margin: 0 0 10px; }
-    nav { margin-top: 18px; }
-    nav a {
-      color: white;
-      margin: 6px;
-      text-decoration: none;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--green);
       font-weight: bold;
+      font-size: 18px;
     }
-    main {
-      max-width: 760px;
-      margin: 22px auto;
-      padding: 0 14px;
-    }
-    section {
-      background: white;
-      padding: 20px;
-      margin-bottom: 18px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px #00000010;
-    }
-    h2 { color: #087443; }
-    .donate {
-      display: inline-block;
-      background: #087443;
+    .logo {
+      width: 43px;
+      height: 43px;
+      background: var(--green);
       color: white;
-      padding: 12px 18px;
-      border-radius: 7px;
-      text-decoration: none;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
     }
-    footer {
-      background: #173d2a;
+    nav { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+    nav a { color: var(--text); text-decoration: none; font-size: 14px; }
+    nav a:hover { color: var(--green); }
+    select, input, textarea, button {
+      font: inherit;
+    }
+    select {
+      padding: 8px;
+      border: 1px solid #d5dfd8;
+      border-radius: 8px;
+      background: white;
+    }
+    .hero {
+      padding: 65px 6%;
+      background: linear-gradient(120deg, #064e30f2, #087443e8);
       color: white;
       text-align: center;
-      padding: 18px;
+    }
+    .hero .tag {
+      color: var(--gold);
+      font-weight: bold;
+      letter-spacing: 2px;
+      font-size: 12px;
+    }
+    h1 { font-size: clamp(32px, 6vw, 55px); line-height: 1.15; margin: 15px 0; }
+    .hero p { max-width: 680px; margin: 0 auto 25px; font-size: 17px; }
+    .btn {
+      display: inline-block;
+      border: 0;
+      border-radius: 9px;
+      padding: 12px 20px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-gold { background: var(--gold); color: #263322; }
+    .btn-green { background: var(--green); color: white; }
+    .btn-light { background: white; color: var(--green); }
+    section { padding: 45px 6%; }
+    .section-heading { text-align: center; margin-bottom: 25px; }
+    .section-heading h2 { color: var(--dark); margin-bottom: 5px; }
+    .section-heading p { color: var(--muted); margin-top: 0; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      max-width: 900px;
+      margin: -24px auto 0;
+      position: relative;
+      padding: 0 15px;
+    }
+    .stat {
+      text-align: center;
+      background: white;
+      border-radius: 12px;
+      padding: 20px 10px;
+      box-shadow: 0 5px 20px #0000000b;
+    }
+    .stat strong { display: block; color: var(--green); font-size: 22px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      max-width: 1100px;
+      margin: auto;
+    }
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 18px #00000009;
+    }
+    .card-icon { font-size: 32px; }
+    .card h3 { color: var(--dark); margin-bottom: 8px; }
+    .card p { color: var(--muted); font-size: 14px; }
+    .donation-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      max-width: 1050px;
+      margin: auto;
+      align-items: start;
+    }
+    .panel {
+      background: white;
+      border-radius: 14px;
+      padding: 25px;
+      box-shadow: 0 4px 18px #00000009;
+    }
+    label { display: block; font-size: 14px; font-weight: bold; margin: 12px 0 5px; }
+    input[type="text"], input[type="email"], input[type="number"], textarea {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #d5dfd8;
+      border-radius: 8px;
+      background: white;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: 2px solid #80cba6;
+      border-color: var(--green);
+    }
+    .amounts { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .amount-btn {
+      padding: 8px 13px;
+      border: 1px solid #cbd9cf;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+    }
+    .amount-btn.active { background: var(--green); color: white; border-color: var(--green); }
+    .checkline { display: flex; align-items: start; gap: 9px; font-size: 13px; margin: 14px 0; }
+    .checkline input { margin-top: 5px; }
+    .notice {
+      background: #fff7df;
+      border-left: 4px solid var(--gold);
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 13px;
+      margin: 15px 0;
+    }
+    .payment-item {
+      padding: 13px 0;
+      border-bottom: 1px solid #edf1ed;
+    }
+    .payment-item:last-child { border-bottom: 0; }
+    .payment-item strong { display: block; color: var(--dark); }
+    .payment-item small { color: var(--muted); }
+    .copy-btn {
+      padding: 6px 10px;
+      border: 1px solid #cbd9cf;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 5px;
+      font-size: 12px;
+    }
+    .donor-list { max-width: 850px; margin: auto; }
+    .donor {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      background: white;
+      padding: 14px 17px;
+      border-radius: 9px;
+      margin-bottom: 9px;
+    }
+    .donor span { color: var(--muted); font-size: 13px; }
+    .donor strong { color: var(--green); }
+    .empty { text-align: center; color: var(--muted); padding: 20px; }
+    .contact {
+      background: var(--dark);
+      color: white;
+      text-align: center;
+    }
+    .contact p { color: #e0eee5; }
+    footer {
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    #message { margin-top: 12px; font-size: 14px; }
+    .small { font-size: 12px; color: var(--muted); }
+    @media (max-width: 750px) {
+      header { justify-content: center; }
+      nav { justify-content: center; }
+      .cards { grid-template-columns: 1fr; }
+      .donation-layout { grid-template-columns: 1fr; }
+      .stats { gap: 8px; padding: 0 8px; }
+      .stat { padding: 15px 5px; }
+      .stat strong { font-size: 16px; }
+      .stat span { font-size: 11px; }
+      section { padding: 35px 5%; }
+      .hero { padding: 50px 5%; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Matendo ya Huruma</h1>
-    <p>Tushirikiane kusaidia yatima na watu wenye uhitaji.</p>
-    <nav>
-      <a href="#kuhusu">Kuhusu Sisi</a>
-      <a href="#michango">Michango</a>
-      <a href="#mawasiliano">Mawasiliano</a>
-    </nav>
-  </header>
+<header>
+  <div class="brand">
+    <div class="logo">♡</div>
+    <span>MATENDO YA HURUMA</span>
+  </div>
+  <nav>
+    <a href="#home" data-i18n="home">Nyumbani</a>
+    <a href="#about" data-i18n="about">Kuhusu sisi</a>
+    <a href="#donate" data-i18n="donate">Changia</a>
+    <a href="#donors" data-i18n="donors">Wachangiaji</a>
+    <select id="language" aria-label="Choose language">
+      <option value="sw">Kiswahili</option>
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="zh">中文</option>
+    </select>
+  </nav>
+</header>
 
-  <main>
-    <section id="kuhusu">
-      <h2>Kuhusu Matendo ya Huruma</h2>
-      <p>Tunaamini kuwa kila tendo la huruma linaweza kuleta matumaini. Tunawaalika watu wenye moyo wa kujitolea kuungana nasi kusaidia wenye uhitaji.</p>
-    </section>
+<main>
+  <section class="hero" id="home">
+    <div class="tag" data-i18n="tag">UPENDO • MATUMAINI • HURUMA</div>
+    <h1 data-i18n="heroTitle">Tushirikiane Kubadilisha Maisha</h1>
+    <p data-i18n="heroText">Mchango wako unaweza kuleta matumaini kwa watoto yatima na watu wenye uhitaji. Kila tendo la huruma lina maana.</p>
+    <a class="btn btn-gold" href="#donate" data-i18n="donateNow">Changia Sasa</a>
+    <a class="btn btn-light" href="#about" data-i18n="learnMore">Jifunze zaidi</a>
+  </section>
 
-    <section id="michango">
-      <h2>Changia na Ulete Matumaini</h2>
-      <p>Mchango wako unaweza kusaidia kuboresha maisha ya watu wenye uhitaji.</p>
-      <p><strong>Muhimu:</strong> Thibitisha taarifa za malipo na msimamizi kabla ya kutuma fedha. Usitume fedha kwa namba ambazo hazijathibitishwa.</p>
-      <a class="donate" href="#mawasiliano">Jifunze Jinsi ya Kuchangia</a>
-    </section>
+  <div class="stats">
+    <div class="stat">
+      <strong id="totalAmount">TSh 0</strong>
+      <span data-i18n="totalVerified">Jumla ya michango iliyothibitishwa</span>
+    </div>
+    <div class="stat">
+      <strong id="donationCount">0</strong>
+      <span data-i18n="verifiedDonations">Michango iliyothibitishwa</span>
+    </div>
+    <div class="stat">
+      <strong>♡</strong>
+      <span data-i18n="everyDonation">Kila mchango una maana</span>
+    </div>
+  </div>
 
-    <section id="mawasiliano">
-      <h2>Mawasiliano</h2>
-      <p>Kwa maswali kuhusu mradi na michango, wasiliana na msimamizi:</p>
-      <p><strong>Barua pepe:</strong> Ansibert73@gmail.com</p>
-    </section>
-  </main>
+  <section id="about">
+    <div class="section-heading">
+      <h2 data-i18n="aboutTitle">Kuhusu Matendo ya Huruma</h2>
+      <p data-i18n="aboutText">Tunaamini kuwa kusaidiana kunajenga jamii yenye matumaini.</p>
+    </div>
+    <div class="cards">
+      <article class="card">
+        <div class="card-icon">📚</div>
+        <h3 data-i18n="education">Elimu</h3>
+        <p data-i18n="educationText">Kusaidia watoto wenye uhitaji kupata fursa za kujifunza na kuendeleza ndoto zao.</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">🤝</div>
+        <h3 data-i18n="support">Msaada wa kijamii</h3>
+        <p data-i18n="supportText">Kushirikiana kusaidia watu na familia zinazokabiliwa na changamoto za maisha.</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">💚</div>
+        <h3 data-i18n="compassion">Huruma</h3>
+        <p data-i18n="compassionText">Kuhamasisha upendo, ukarimu na mshikamano katika jamii zetu.</p>
+      </article>
+    </div>
+  </section>
 
-  <footer>
-    <p>Matendo ya Huruma — Upendo kwa vitendo.</p>
-  </footer>
+  <section id="donate">
+    <div class="section-heading">
+      <h2 data-i18n="donateTitle">Toa Mchango Wako</h2>
+      <p data-i18n="donateIntro">Chagua njia ya malipo na fuata maelekezo yaliyo hapa chini.</p>
+    </div>
+    <div class="donation-layout">
+      <div class="panel">
+        <h3 data-i18n="donationForm">Fomu ya Mchango</h3>
+        <form id="donationForm">
+          <label for="donorName" data-i18n="yourName">Jina lako</label>
+          <input id="donorName" name="name" type="text" maxlength="100" required placeholder="Jina lako">
+
+          <label for="donorEmail" data-i18n="yourEmail">Barua pepe (si lazima)</label>
+          <input id="donorEmail" name="email" type="email" maxlength="150" placeholder="example@email.com">
+
+          <label data-i18n="amount">Kiasi cha mchango (TSh)</label>
+          <div class="amounts">
+            <button type="button" class="amount-btn" data-amount="5000">5,000</button>
+            <button type="button" class="amount-btn" data-amount="10000">10,000</button>
+            <button type="button" class="amount-btn" data-amount="20000">20,000</button>
+            <button type="button" class="amount-btn" data-amount="50000">50,000</button>
+          </div>
+          <input id="donorAmount" name="amount" type="number" min="100" max="1000000000" step="1" required placeholder="Andika kiasi">
+
+          <label for="paymentMethod" data-i18n="paymentMethod">Njia ya malipo</label>
+          <select id="paymentMethod" name="paymentMethod" required style="width:100%;padding:11px;border:1px solid #d5dfd8;border-radius:8px;">
+            <option value="halopesa">HaloPesa / Halotel</option>
+            <option value="mixx">Mixx by Yas</option>
+            <option value="vodacom">Vodacom M-Pesa</option>
+            <option value="airtel">Airtel Money</option>
+            <option value="crdb">CRDB Bank</option>
+            <option value="nmb">NMB Bank</option>
+            <option value="usdt">USDT (TRON/TRC20)</option>
+          </select>
+
+          <div class="checkline">
+            <input id="showName" type="checkbox">
+            <label for="showName" style="margin:0;font-weight:normal" data-i18n="consent">Ninaruhusu jina langu kuonekana kwenye orodha ya wachangiaji.</label>
+          </div>
+          <button type="submit" class="btn btn-green" style="width:100%" data-i18n="submitDonation">Wasilisha taarifa ya mchango</button>
+          <div id="message" role="status" aria-live="polite"></div>
+          <p class="small" data-i18n="verificationNote">Muhimu: Kutuma fomu hakuthibitishi malipo. Mchango utaongezwa kwenye jumla baada ya msimamizi kuthibitisha kupokea fedha.</p>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3 data-i18n="paymentInstructions">Maelekezo ya Malipo</h3>
+        <p class="small" data-i18n="paymentIntro">Tuma mchango kwa njia uliyochagua. Hakikisha taarifa ni sahihi kabla ya kutuma pesa.</p>
+
+        <div class="payment-item">
+          <strong>HaloPesa / Halotel</strong>
+          <div>+255 612 550 405</div>
+          <small data-i18n="code">Namba ya malipo</small>: 4027298
+          <br><button class="copy-btn" type="button" data-copy="+255612550405" data-i18n="copyNumber">Nakili namba</button>
+        </div>
+        <div class="payment-item">
+          <strong>Mixx by Yas</strong>
+          <div data-i18n="lipaNamba">Lipa Namba</div>: 45104137
+          <br><button class="copy-btn" type="button" data-copy="45104137" data-i18n="copyNumber">Nakili namba</button>
+        </div>
+        <div class="payment-item">
+          <strong>Vodacom M-Pesa</strong>
+          <div data-i18n="lipaNamba">Lipa Namba</div>: 67476575
+          <br><small data-i18n="code">Namba ya malipo</small>: 1507864
+          <br><button class="copy-btn" type="button" data-copy="67476575" data-i18n="copyNumber">Nakili namba</button>
+        </div>
+        <div class="payment-item">
+          <strong>Airtel Money</strong>
+          <div data-i18n="code">Namba ya malipo</div>: 10341965
+          <br><button class="copy-btn" type="button" data-copy="10341965" data-i18n="copyNumber">Nakili namba</button>
+        </div>
+        <div class="payment-item">
+          <strong>CRDB Bank</strong>
+          <div data-i18n="account">Akaunti</div>: 10366682045
+          <br><button class="copy-btn" type="button" data-copy="10366682045" data-i18n="copyNumber">Nakili namba</button>
+        </div>
+        <div class="payment-item">
+          <strong>NMB Bank</strong>
+          <div data-i18n="account">Akaunti</div>: 50510112309
+          <br><button class="copy-btn" type="button" data-copy="50510112309" data-i18n="copyNumber">Nakili namba</button>
+        </div>
+        <div class="payment-item">
+          <strong>USDT — TRON/TRC20</strong>
+          <div style="overflow-wrap:anywhere">TK5wCvs7wHmDnuhVbXVzT9GWXMvNCo21XA</div>
+          <small data-i18n="cryptoWarning">Thibitisha mtandao na anwani kabla ya kutuma crypto. Uhamisho usio sahihi unaweza usirejeshwe.</small>
+          <br><button class="copy-btn" type="button" data-copy="TK5wCvs7wHmDnuhVbXVzT9GWXMvNCo21XA" data-i18n="copyAddress">Nakili anwani</button>
+        </div>
+        <div class="notice" data-i18n="securityNotice">Tafadhali thibitisha jina la mpokeaji na taarifa za malipo kabla ya kutuma fedha. Usishiriki PIN au nenosiri lako na mtu yeyote.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="donors">
+    <div class="section-heading">
+      <h2 data-i18n="donorsTitle">Wachangiaji Wetu</h2>
+      <p data-i18n="donorsIntro">Majina yanaonyeshwa tu pale mchangiaji aliporuhusu, na michango iliyoidhinishwa pekee ndiyo inayoonekana.</p>
+    </div>
+    <div id="donorList" class="donor-list">
+      <div class="empty" data-i18n="loading">Inapakia taarifa...</div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <h2 data-i18n="contactTitle">Ungana Nasi</h2>
+    <p data-i18n="contactText">Kwa maswali kuhusu michango, wasiliana na timu ya Matendo ya Huruma.</p>
+    <a class="btn btn-gold" href="mailto:Ansibert73@gmail.com">Ansibert73@gmail.com</a>
+  </section>
+</main>
+
+<footer>
+  © <span id="year"></span> Matendo ya Huruma. <span data-i18n="footer">Upendo huanza kwa tendo moja la huruma.</span>
+  <p><a href="/admin" style="color:#64756a" data-i18n="adminLink">Msimamizi</a></p>
+</footer>
+
+<script>
+const translations = {
+  sw: {
+    home:"Nyumbani",about:"Kuhusu sisi",donate:"Changia",donors:"Wachangiaji",
+    tag:"UPENDO • MATUMAINI • HURUMA",heroTitle:"Tushirikiane Kubadilisha Maisha",
+    heroText:"Mchango wako unaweza kuleta matumaini kwa watoto yatima na watu wenye uhitaji. Kila tendo la huruma lina maana.",
+    donateNow:"Changia Sasa",learnMore:"Jifunze zaidi",totalVerified:"Jumla ya michango iliyothibitishwa",
+    verifiedDonations:"Michango iliyothibitishwa",everyDonation:"Kila mchango una maana",
+    aboutTitle:"Kuhusu Matendo ya Huruma",aboutText:"Tunaamini kuwa kusaidiana kunajenga jamii yenye matumaini.",
+    education:"Elimu",educationText:"Kusaidia watoto wenye uhitaji kupata fursa za kujifunza na kuendeleza ndoto zao.",
+    support:"Msaada wa kijamii",supportText:"Kushirikiana kusaidia watu na familia zinazokabiliwa na changamoto za maisha.",
+    compassion:"Huruma",compassionText:"Kuhamasisha upendo, ukarimu na mshikamano katika jamii zetu.",
+    donateTitle:"Toa Mchango Wako",donateIntro:"Chagua njia ya malipo na fuata maelekezo yaliyo hapa chini.",
+    donationForm:"Fomu ya Mchango",yourName:"Jina lako",yourEmail:"Barua pepe (si lazima)",
+    amount:"Kiasi cha mchango (TSh)",paymentMethod:"Njia ya malipo",consent:"Ninaruhusu jina langu kuonekana kwenye orodha ya wachangiaji.",
+    submitDonation:"Wasilisha taarifa ya mchango",verificationNote:"Muhimu: Kutuma fomu hakuthibitishi malipo. Mchango utaongezwa kwenye jumla baada ya msimamizi kuthibitisha kupokea fedha.",
+    paymentInstructions:"Maelekezo ya Malipo",paymentIntro:"Tuma mchango kwa njia uliyochagua. Hakikisha taarifa ni sahihi kabla ya kutuma pesa.",
+    code:"Namba ya malipo",lipaNamba:"Lipa Namba",account:"Akaunti",copyNumber:"Nakili namba",
+    copyAddress:"Nakili anwani",cryptoWarning:"Thibitisha mtandao na anwani kabla ya kutuma crypto. Uhamisho usio sahihi unaweza usirejeshwe.",
+    securityNotice:"Tafadhali thibitisha jina la mpokeaji na taarifa za malipo kabla ya kutuma fedha. Usishiriki PIN au nenosiri lako na mtu yeyote.",
+    donorsTitle:"Wachangiaji Wetu",donorsIntro:"Majina yanaonyeshwa tu pale mchangiaji aliporuhusu, na michango iliyoidhinishwa pekee ndiyo inayoonekana.",
+    loading:"Inapakia taarifa...",contactTitle:"Ungana Nasi",contactText:"Kwa maswali kuhusu michango, wasiliana na timu ya Matendo ya Huruma.",
+    footer:"Upendo huanza kwa tendo moja la huruma.",adminLink:"Msimamizi",
+    required:"Tafadhali jaza jina na kiasi sahihi.",sending:"Inatuma taarifa...",
+    success:"Taarifa imetumwa. Mchango utahesabiwa baada ya kuthibitishwa.",
+    error:"Imeshindikana kutuma taarifa. Angalia intaneti kisha ujaribu tena.",
+    noDonors:"Bado hakuna michango iliyothibitishwa ya kuonyeshwa.",
+    anonymous:"Mchangiaji wa hiari",currency:"TSh"
+  },
+  en: {
+    home:"Home",about:"About",donate:"Donate",donors:"Donors",
+    tag:"LOVE • HOPE • COMPASSION",heroTitle:"Together, We Can Change Lives",
+    heroText:"Your donation can bring hope to orphans and people in need. Every act of kindness matters.",
+    donateNow:"Donate Now",learnMore:"Learn More",totalVerified:"Total verified donations",
+    verifiedDonations:"Verified donations",everyDonation:"Every donation matters",
+    aboutTitle:"About Matendo ya Huruma",aboutText:"We believe helping one another builds a hopeful community.",
+    education:"Education",educationText:"Helping children in need access learning opportunities and pursue their dreams.",
+    support:"Community support",supportText:"Working together to support people and families facing life challenges.",
+    compassion:"Compassion",compassionText:"Promoting love, generosity and solidarity in our communities.",
+    donateTitle:"Make a Donation",donateIntro:"Choose a payment method and follow the instructions below.",
+    donationForm:"Donation Form",yourName:"Your name",yourEmail:"Email (optional)",
+    amount:"Donation amount (TZS)",paymentMethod:"Payment method",consent:"I allow my name to appear in the public donor list.",
+    submitDonation:"Submit donation details",verificationNote:"Important: Submitting this form does not verify payment. The total updates only after an administrator confirms receipt of funds.",
+    paymentInstructions:"Payment Instructions",paymentIntro:"Send your donation using your chosen method. Check the details before sending money.",
+    code:"Payment code",lipaNamba:"Lipa Namba",account:"Account",copyNumber:"Copy number",
+    copyAddress:"Copy address",cryptoWarning:"Verify the network and address before sending crypto. Incorrect transfers may not be recoverable.",
+    securityNotice:"Confirm the recipient name and payment details before sending money. Never share your PIN or password.",
+    donorsTitle:"Our Donors",donorsIntro:"Names appear only with donor consent. Only approved donations are displayed.",
+    loading:"Loading information...",contactTitle:"Contact Us",contactText:"For donation questions, contact the Matendo ya Huruma team.",
+    footer:"Love begins with one act of kindness.",adminLink:"Admin",
+    required:"Please enter a valid name and amount.",sending:"Submitting details...",
+    success:"Details submitted. The donation will count after verification.",
+    error:"Could not submit details. Check your connection and try again.",
+    noDonors:"There are no verified donations to display yet.",
+    anonymous:"Anonymous donor",currency:"TZS"
+  },
+  fr: {
+    home:"Accueil",about:"À propos",donate:"Faire un don",donors:"Donateurs",
+    tag:"AMOUR • ESPOIR • COMPASSION",heroTitle:"Ensemble, changeons des vies",
+    heroText:"Votre don peut redonner espoir aux orphelins et aux personnes dans le besoin. Chaque geste compte.",
+    donateNow:"Faire un don",learnMore:"En savoir plus",totalVerified:"Total des dons vérifiés",
+    verifiedDonations:"Dons vérifiés",everyDonation:"Chaque don compte",
+    aboutTitle:"À propos de Matendo ya Huruma",aboutText:"Nous croyons que l'entraide construit une communauté pleine d'espoir.",
+    education:"Éducation",educationText:"Aider les enfants dans le besoin à apprendre et à réaliser leurs rêves.",
+    support:"Soutien communautaire",supportText:"Soutenir ensemble les personnes et les familles confrontées aux difficultés.",
+    compassion:"Compassion",compassionText:"Promouvoir l'amour, la générosité et la solidarité.",
+    donateTitle:"Faites un don",donateIntro:"Choisissez un moyen de paiement et suivez les instructions.",
+    donationForm:"Formulaire de don",yourName:"Votre nom",yourEmail:"E-mail (facultatif)",
+    amount:"Montant du don (TZS)",paymentMethod:"Moyen de paiement",consent:"J'autorise l'affichage de mon nom dans la liste des donateurs.",
+    submitDonation:"Envoyer les informations du don",verificationNote:"Important : ce formulaire ne confirme pas le paiement. Le total ne change qu'après vérification par un administrateur.",
+    paymentInstructions:"Instructions de paiement",paymentIntro:"Envoyez votre don avec le moyen choisi. Vérifiez les informations avant le transfert.",
+    code:"Code de paiement",lipaNamba:"Lipa Namba",account:"Compte",copyNumber:"Copier le numéro",
+    copyAddress:"Copier l'adresse",cryptoWarning:"Vérifiez le réseau et l'adresse avant d'envoyer des cryptomonnaies.",
+    securityNotice:"Vérifiez le bénéficiaire et les informations de paiement. Ne partagez jamais votre code PIN ni votre mot de passe.",
+    donorsTitle:"Nos donateurs",donorsIntro:"Les noms apparaissent uniquement avec le consentement du donateur. Seuls les dons approuvés sont affichés.",
+    loading:"Chargement...",contactTitle:"Contactez-nous",contactText:"Pour toute question, contactez l'équipe Matendo ya Huruma.",
+    footer:"L'amour commence par un geste de compassion.",adminLink:"Administration",
+    required:"Veuillez saisir un nom et un montant valides.",sending:"Envoi des informations...",
+    success:"Informations envoyées. Le don sera comptabilisé après vérification.",
+    error:"Échec de l'envoi. Vérifiez votre connexion et réessayez.",
+    noDonors:"Aucun don vérifié à afficher pour le moment.",
+    anonymous:"Donateur anonyme",currency:"TZS"
+  },
+  zh: {
+    home:"首页",about:"关于我们",donate:"捐款",donors:"捐赠者",
+    tag:"关爱 • 希望 • 善意",heroTitle:"携手改变生活",
+    heroText:"您的捐款可以为孤儿和有需要的人带来希望。每一份善意都很重要。",
+    donateNow:"立即捐款",learnMore:"了解更多",totalVerified:"已核实捐款总额",
+    verifiedDonations:"已核实的捐款",everyDonation:"每一份捐款都很重要",
+    aboutTitle:"关于 Matendo ya Huruma",aboutText:"我们相信互相帮助能够建立充满希望的社区。",
+    education:"教育",educationText:"帮助有需要的孩子获得学习机会，实现梦想。",
+    support:"社区支持",supportText:"共同帮助面临生活困难的人和家庭。",
+    compassion:"关爱",compassionText:"在社区中倡导爱心、慷慨和团结。",
+    donateTitle:"进行捐款",donateIntro:"选择付款方式并按照以下说明操作。",
+    donationForm:"捐款表格",yourName:"您的姓名",yourEmail:"电子邮箱（选填）",
+    amount:"捐款金额（坦桑尼亚先令）",paymentMethod:"付款方式",consent:"我同意在公开捐赠者名单中显示我的姓名。",
+    submitDonation:"提交捐款信息",verificationNote:"重要提示：提交表格不代表付款已确认。管理员确认收到款项后，捐款总额才会更新。",
+    paymentInstructions:"付款说明",paymentIntro:"使用您选择的方式捐款。转账前请核对信息。",
+    code:"付款代码",lipaNamba:"付款号码",account:"账户",copyNumber:"复制号码",
+    copyAddress:"复制地址",cryptoWarning:"发送加密货币前请核实网络和地址。错误转账可能无法追回。",
+    securityNotice:"付款前请核实收款人和付款信息。切勿分享您的 PIN 或密码。",
+    donorsTitle:"我们的捐赠者",donorsIntro:"只有获得捐赠者同意才会显示姓名，并且只显示已批准的捐款。",
+    loading:"正在加载...",contactTitle:"联系我们",contactText:"如有捐款问题，请联系 Matendo ya Huruma 团队。",
+    footer:"爱始于一个善意的行动。",adminLink:"管理员",
+    required:"请输入有效姓名和金额。",sending:"正在提交信息...",
+    success:"信息已提交。捐款将在核实后计入总额。",
+    error:"提交失败。请检查网络连接后重试。",
+    noDonors:"目前还没有可显示的已核实捐款。",
+    anonymous:"匿名捐赠者",currency:"TZS"
+  }
+};
+
+let currentLanguage = "sw";
+const $ = id => document.getElementById(id);
+
+function translatePage(lang) {
+  currentLanguage = translations[lang] ? lang : "sw";
+  document.documentElement.lang = currentLanguage;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (translations[currentLanguage][key]) {
+      el.textContent = translations[currentLanguage][key];
+    }
+  });
+  $("donorName").placeholder = currentLanguage === "en" ? "Your name" :
+    currentLanguage === "fr" ? "Votre nom" :
+    currentLanguage === "zh" ? "您的姓名" : "Jina lako";
+  renderDonors(lastDonations);
+}
+
+$("language").addEventListener("change", e => translatePage(e.target.value));
+
+document.querySelectorAll(".amount-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $("donorAmount").value = btn.dataset.amount;
+    document.querySelectorAll(".amount-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
+document.querySelectorAll(".copy-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const value = btn.dataset.copy;
+    try {
+      await navigator.clipboard.writeText(value);
+      btn.textContent = currentLanguage === "en" ? "Copied!" :
+        currentLanguage === "fr" ? "Copié !" :
+        currentLanguage === "zh" ? "已复制！" : "Imenakiliwa!";
+      setTimeout(() => {
+        btn.textContent = translations[currentLanguage][btn.dataset.i18n || "copyNumber"];
+      }, 1500);
+    } catch {
+      window.prompt("Copy this:", value);
+    }
+  });
+});
+
+function formatMoney(value) {
+  return new Intl.NumberFormat("en-TZ", {
+    maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+}
+
+let lastDonations = [];
+
+function renderDonors(data) {
+  lastDonations = Array.isArray(data) ? data : [];
+  const list = $("donorList");
+  list.innerHTML = "";
+  if (!lastDonations.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = translations[currentLanguage].noDonors;
+    list.appendChild(empty);
+    return;
+  }
+
+  lastDonations.forEach(d => {
+    const row = document.createElement("div");
+    row.className = "donor";
+    const left = document.createElement("div");
+    const name = document.createElement("strong");
+    name.textContent = d.showName && d.name
+      ? d.name
+      : translations[currentLanguage].anonymous;
+    const date = document.createElement("div");
+    date.innerHTML = "";
+    const dateText = document.createElement("span");
+    if (d.verifiedAt || d.createdAt) {
+      const dateValue = new Date(d.verifiedAt || d.createdAt);
+      if (!isNaN(dateValue.getTime())) {
+        dateText.textContent = dateValue.toLocaleDateString(
+          currentLanguage === "zh" ? "zh-CN" : currentLanguage
+        );
+      }
+    }
+    left.appendChild(name);
+    left.appendChild(document.createElement("br"));
+    left.appendChild(dateText);
+
+    const amount = document.createElement("strong");
+    amount.textContent = "TSh " + formatMoney(d.amount);
+    row.appendChild(left);
+    row.appendChild(amount);
+    list.appendChild(row);
+  });
+}
+
+async function loadDonations() {
+  try {
+    const response = await fetch("/api/donations", { cache: "no-store" });
+    if (!response.ok) throw new Error("Request failed");
+    const result = await response.json();
+    $("totalAmount").textContent = "TSh " + formatMoney(result.totalAmount);
+    $("donationCount").textContent = formatMoney(result.donationCount);
+    renderDonors(result.donations || []);
+  } catch {
+    renderDonors([]);
+    $("totalAmount").textContent = "TSh 0";
+    $("donationCount").textContent = "0";
+  }
+}
+
+$("donationForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const amount = Number($("donorAmount").value);
+  const name = $("donorName").value.trim();
+  const email = $("donorEmail").value.trim();
+
+  if (!name || !Number.isFinite(amount) || amount < 100 || amount > 1000000000) {
+    $("message").textContent = translations[currentLanguage].required;
+    return;
+  }
+
+  const button = event.submitter;
+  button.disabled = true;
+  $("message").textContent = translations[currentLanguage].sending;
+
+  try {
+    const response = await fetch("/api/donations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        email,
+        amount,
+        paymentMethod: $("paymentMethod").value,
+        showName: $("showName").checked
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Submission failed");
+
+    $("message").textContent = translations[currentLanguage].success;
+    $("donationForm").reset();
+    document.querySelectorAll(".amount-btn").forEach(b => b.classList.remove("active"));
+    await loadDonations();
+  } catch {
+    $("message").textContent = translations[currentLanguage].error;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("year").textContent = new Date().getFullYear();
+translatePage("sw");
+loadDonations();
+setInterval(loadDonations, 60000);
+</script>
 </body>
 </html>
