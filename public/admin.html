@@ -1,208 +1,341 @@
-
 <!DOCTYPE html>
 <html lang="sw">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Matendo ya Huruma</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 18px;
-      background: #f2f7f3;
-      color: #20372a;
-    }
-    main { max-width: 850px; margin: auto; }
-    section {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin: 15px 0;
-      box-shadow: 0 2px 8px #0001;
-    }
-    h1, h2 { color: #087443; }
-    input, button {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px;
-      margin: 7px 0;
-      border-radius: 7px;
-      font-size: 16px;
-    }
-    input { border: 1px solid #bbb; }
-    button {
-      border: 0;
-      color: white;
-      background: #087443;
-      cursor: pointer;
-    }
-    .reject { background: #a52c2c; }
-    .item {
-      border: 1px solid #ddd;
-      padding: 14px;
-      margin: 12px 0;
-      border-radius: 8px;
-      overflow-wrap: anywhere;
-    }
-    .muted { color: #59665e; }
-    [hidden] { display: none !important; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#075e40">
+<title>Admin Dashboard | Matendo ya Huruma</title>
+<style>
+:root{--green:#087b4b;--dark:#06452f;--bg:#f3f7f4;--red:#b42318}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#20352a}
+header{background:linear-gradient(135deg,var(--dark),var(--green));color:white;padding:28px 16px;text-align:center}
+header h1{margin:0 0 8px}
+main{max-width:1100px;margin:24px auto;padding:0 15px}
+.card{background:white;border-radius:15px;padding:22px;margin-bottom:20px;box-shadow:0 4px 18px #1232}
+h2{margin-top:0}
+input,select,textarea,button{width:100%;padding:13px;margin:7px 0;border-radius:9px;font-size:16px}
+input,select,textarea{border:1px solid #d0dbd3;background:white}
+button{border:0;background:var(--green);color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.secondary{background:#52645a}
+.reject{background:var(--red)}
+.hidden{display:none!important}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.stat{background:#eef8f1;border-radius:12px;padding:18px}
+.stat strong{display:block;font-size:24px;color:var(--green);margin-top:8px;overflow-wrap:anywhere}
+.item{border:1px solid #dce6df;border-radius:12px;padding:16px;margin:12px 0;overflow-wrap:anywhere}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions button{flex:1;min-width:120px}
+.muted{color:#68776e;font-size:14px;line-height:1.6}
+#message{white-space:pre-wrap;overflow-wrap:anywhere}
+.preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:15px}
+.preview img,.preview video{width:100%;max-height:220px;object-fit:cover;border-radius:10px}
+.badge{display:inline-block;background:#e8f5ec;color:#075e40;padding:5px 9px;border-radius:20px;font-size:13px}
+footer{text-align:center;padding:24px;color:#68776e}
+</style>
 </head>
 <body>
+<header>
+<h1>Matendo ya Huruma</h1>
+<p>Admin Dashboard — Kusimamia Michango na Maudhui</p>
+</header>
+
 <main>
-  <h1>Matendo ya Huruma</h1>
-  <p class="muted">Eneo la msimamizi — Admin Dashboard</p>
+<section class="card" id="loginCard">
+<h2>Ingia kwa Admin</h2>
+<p class="muted">Tumia nenosiri la admin lililowekwa kwenye mazingira ya seva.</p>
+<form id="loginForm">
+<label for="password">Nenosiri</label>
+<input id="password" type="password" placeholder="Admin password" required autocomplete="current-password">
+<button type="submit" id="loginButton">Ingia</button>
+</form>
+</section>
 
-  <section id="loginBox">
-    <h2>Ingia Admin</h2>
-    <label for="password">Nenosiri la Admin</label>
-    <input id="password" type="password" autocomplete="current-password"
-      placeholder="Weka nenosiri lako">
-    <button id="loginBtn">Ingia</button>
-  </section>
+<section id="dashboard" class="hidden">
+<div class="card">
+<h2>Muhtasari wa Michango</h2>
+<div class="grid">
+<div class="stat">Jumla iliyothibitishwa<strong id="total">TZS 0</strong></div>
+<div class="stat">Inayosubiri<strong id="pendingCount">0</strong></div>
+<div class="stat">Iliyothibitishwa<strong id="verifiedCount">0</strong></div>
+<div class="stat">Iliyokataliwa<strong id="rejectedCount">0</strong></div>
+</div>
+<div class="actions" style="margin-top:14px">
+<button id="refreshButton">Sasisha taarifa</button>
+<button id="logoutButton" class="secondary">Toka</button>
+</div>
+</div>
 
-  <section id="dashboard" hidden>
-    <h2>Muhtasari wa Michango</h2>
-    <p>Jumla ya michango iliyothibitishwa:</p>
-    <h2 id="total">TSh 0</h2>
-    <button id="refreshBtn">Onyesha upya</button>
-    <button id="logoutBtn" class="reject">Toka</button>
-    <p id="message" role="status"></p>
-    <div id="donations"></div>
-  </section>
+<div class="card">
+<h2>Michango Inayosubiri</h2>
+<p class="muted">Kagua muamala kwenye akaunti husika kabla ya kuthibitisha mchango. Kutuma fomu pekee hakuthibitishi kuwa pesa imepokelewa.</p>
+<div id="pendingList">Inapakia...</div>
+</div>
+
+<div class="card">
+<h2>Michango Iliyokaguliwa</h2>
+<div id="reviewedList">Inapakia...</div>
+</div>
+
+<div class="card">
+<h2>Picha na Video za Matendo ya Huruma</h2>
+<p class="muted">Chagua picha au video za shughuli za misaada. Sehemu hii inahitaji API ya backend na hifadhi ya faili ili maudhui yapakiwe na yaonekane kwa wageni wote.</p>
+<form id="mediaForm">
+<label for="mediaFiles">Chagua picha au video</label>
+<input id="mediaFiles" type="file" accept="image/*,video/*" multiple>
+<label for="mediaCaption">Maelezo ya picha/video</label>
+<textarea id="mediaCaption" rows="3" maxlength="500" placeholder="Eleza shughuli ya msaada..."></textarea>
+<button type="submit">Pakia picha/video</button>
+</form>
+<div id="mediaPreview" class="preview"></div>
+<div id="mediaStatus" class="muted"></div>
+</div>
+
+<div class="card">
+<h2>Malipo ya Kimataifa</h2>
+<p class="muted">Muunganisho wa malipo ya kimataifa lazima utumie akaunti halali ya mtoa huduma na uthibitisho wa malipo kutoka kwa API yake. Usichukulie picha ya risiti au ujumbe wa mchangiaji kama uthibitisho wa mwisho.</p>
+
+<div class="item">
+<h3>PayPal</h3>
+<p>Inaweza kutumika kupokea michango ya kimataifa ikiwa akaunti yako na nchi yako vinastahili huduma hiyo.</p>
+<a href="https://www.paypal.com/" target="_blank" rel="noopener noreferrer">Fungua PayPal</a>
+</div>
+
+<div class="item">
+<h3>Stripe</h3>
+<p>Inahitaji biashara na akaunti inayostahili katika nchi zinazoungwa mkono. Hakikisha Tanzania inaruhusiwa kwa aina ya akaunti unayofungua.</p>
+<a href="https://stripe.com/global" target="_blank" rel="noopener noreferrer">Angalia nchi zinazoungwa mkono</a>
+</div>
+
+<div class="item">
+<h3>USDT — TRC20</h3>
+<p class="muted">Tumia anwani ya TRC20 iliyothibitishwa na mwenye akaunti. Hakikisha mtandao na anwani ni sahihi kabla ya kutuma fedha. Muamala wa crypto hauwezi kuchukuliwa kuwa umethibitishwa kwa kujaza fomu pekee.</p>
+<p>Uthibitisho wa blockchain na utaratibu wa kuhesabu michango unahitaji kuunganishwa kwenye backend.</p>
+</div>
+
+<p class="muted">Hakuna malipo ya kadi au PayPal yatakayofanyika kupitia ukurasa huu mpaka muunganisho wa mtoa huduma uwekwe na kupimwa.</p>
+</div>
+
+<div class="card">
+<h2>Usalama wa Mfumo</h2>
+<ul>
+<li>Usishiriki nenosiri la admin.</li>
+<li>Thibitisha pesa kabla ya kuidhinisha mchango.</li>
+<li>Hifadhi data kwenye hifadhi endelevu ya seva.</li>
+<li>Usichapishe majina ya wafadhili bila ridhaa yao.</li>
+</ul>
+</div>
+</section>
+
+<section class="card">
+<p id="message" role="status"></p>
+</section>
 </main>
 
-<script>
-const loginBox = document.getElementById("loginBox");
-const dashboard = document.getElementById("dashboard");
-const message = document.getElementById("message");
-const list = document.getElementById("donations");
-const money = n => "TSh " + Number(n).toLocaleString("en-US");
+<footer>Matendo ya Huruma — Kusaidiana ni upendo.</footer>
 
-async function api(url, options = {}) {
-  const response = await fetch(url, {
-    credentials: "same-origin",
+<script>
+const $ = id => document.getElementById(id);
+
+function setMessage(text){
+  $("message").textContent = text;
+}
+
+function money(value){
+  return new Intl.NumberFormat("sw-TZ",{
+    style:"currency",
+    currency:"TZS",
+    maximumFractionDigits:0
+  }).format(value || 0);
+}
+
+async function api(url, options = {}){
+  const response = await fetch(url,{
+    credentials:"same-origin",
     ...options,
-    headers: {
-      "Content-Type": "application/json",
+    headers:{
+      ...(options.body instanceof FormData ? {} : {"Content-Type":"application/json"}),
       ...(options.headers || {})
     }
   });
+
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Hitilafu imetokea.");
+  if(!response.ok) throw new Error(data.error || "Hitilafu imetokea.");
   return data;
 }
 
-async function loadDonations() {
-  message.textContent = "Inapakia michango...";
-  try {
+function makeDonationCard(d, pending){
+  const card = document.createElement("div");
+  card.className = "item";
+
+  const heading = document.createElement("h3");
+  heading.textContent = d.name;
+  card.appendChild(heading);
+
+  [
+    "Kiasi: " + money(d.amount),
+    "Njia ya malipo: " + d.paymentMethod,
+    "Rejea: " + (d.reference || "Haijawekwa"),
+    "Tarehe: " + new Date(d.createdAt).toLocaleString(),
+    "Hali: " + d.status
+  ].forEach(text => {
+    const p = document.createElement("p");
+    p.textContent = text;
+    card.appendChild(p);
+  });
+
+  if(pending){
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const verify = document.createElement("button");
+    verify.textContent = "Thibitisha";
+    verify.addEventListener("click", () => reviewDonation(d.id,"verify"));
+
+    const reject = document.createElement("button");
+    reject.textContent = "Kataa";
+    reject.className = "reject";
+    reject.addEventListener("click", () => reviewDonation(d.id,"reject"));
+
+    actions.append(verify,reject);
+    card.appendChild(actions);
+  }
+
+  return card;
+}
+
+async function refreshDashboard(){
+  try{
     const data = await api("/api/admin/donations");
-    document.getElementById("total").textContent =
-      money(data.totalVerified);
-    list.replaceChildren();
+    $("loginCard").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
 
-    if (!data.donations.length) {
-      list.textContent = "Bado hakuna michango.";
+    const donations = Array.isArray(data.donations) ? data.donations : [];
+    const pending = donations.filter(d => d.status === "pending");
+    const verified = donations.filter(d => d.status === "verified");
+    const rejected = donations.filter(d => d.status === "rejected");
+
+    $("total").textContent = money(data.totalVerified);
+    $("pendingCount").textContent = pending.length;
+    $("verifiedCount").textContent = verified.length;
+    $("rejectedCount").textContent = rejected.length;
+
+    $("pendingList").replaceChildren();
+    $("reviewedList").replaceChildren();
+
+    if(!pending.length){
+      $("pendingList").textContent = "Hakuna michango inayosubiri.";
+    }else{
+      pending.forEach(d => $("pendingList").appendChild(makeDonationCard(d,true)));
     }
 
-    data.donations.slice().reverse().forEach(d => {
-      const item = document.createElement("div");
-      item.className = "item";
+    const reviewed = [...verified,...rejected].sort(
+      (a,b) => new Date(b.createdAt)-new Date(a.createdAt)
+    );
 
-      const title = document.createElement("h3");
-      title.textContent = d.name;
-      item.appendChild(title);
-
-      const details = document.createElement("p");
-      details.textContent =
-        money(d.amount) + " | " + d.paymentMethod +
-        " | Hali: " + d.status;
-      item.appendChild(details);
-
-      const reference = document.createElement("p");
-      reference.textContent = "Namba ya kumbukumbu: " + (d.reference || "Haijatolewa");
-      item.appendChild(reference);
-
-      const date = document.createElement("p");
-      date.textContent = "Tarehe: " + d.createdAt;
-      item.appendChild(date);
-
-      if (d.status === "pending") {
-        const verify = document.createElement("button");
-        verify.textContent = "Thibitisha malipo";
-        verify.onclick = () => review(d.id, "verify");
-        item.appendChild(verify);
-
-        const reject = document.createElement("button");
-        reject.textContent = "Kataa mchango";
-        reject.className = "reject";
-        reject.onclick = () => review(d.id, "reject");
-        item.appendChild(reject);
-      }
-
-      list.appendChild(item);
-    });
-    message.textContent =
-      "Taarifa zimepakiwa. Hakikisha fedha zimeingia kabla ya kuthibitisha.";
-  } catch (error) {
-    message.textContent = error.message;
-    if (error.message === "Admin login required.") {
-      dashboard.hidden = true;
-      loginBox.hidden = false;
+    if(!reviewed.length){
+      $("reviewedList").textContent = "Bado hakuna michango iliyokaguliwa.";
+    }else{
+      reviewed.forEach(d => $("reviewedList").appendChild(makeDonationCard(d,false)));
     }
+
+    setMessage("");
+  }catch(error){
+    if(error.message === "Admin login required."){
+      $("dashboard").classList.add("hidden");
+      $("loginCard").classList.remove("hidden");
+    }
+    setMessage(error.message);
   }
 }
 
-async function review(id, action) {
-  if (!confirm("Je, umekagua malipo kwenye akaunti na kuthibitisha kuwa fedha zimepokelewa?")) {
-    return;
-  }
-  try {
-    await api("/api/admin/donations/" + encodeURIComponent(id) + "/" + action, {
-      method: "POST",
-      body: "{}"
+async function reviewDonation(id,action){
+  const promptText = action === "verify"
+    ? "Je, umehakikisha pesa imeingia kweli kwenye akaunti?"
+    : "Una uhakika unataka kukataa mchango huu?";
+
+  if(!confirm(promptText)) return;
+
+  try{
+    await api("/api/admin/donations/"+encodeURIComponent(id)+"/"+action,{
+      method:"POST",
+      body:JSON.stringify({})
     });
-    await loadDonations();
-  } catch (error) {
-    message.textContent = error.message;
+    setMessage(action === "verify" ? "Mchango umethibitishwa." : "Mchango umekataliwa.");
+    await refreshDashboard();
+  }catch(error){
+    setMessage(error.message);
   }
 }
 
-document.getElementById("loginBtn").onclick = async () => {
-  message.textContent = "";
-  try {
-    await api("/api/admin/login", {
-      method: "POST",
-      body: JSON.stringify({
-        password: document.getElementById("password").value
-      })
-    });
-    loginBox.hidden = true;
-    dashboard.hidden = false;
-    document.getElementById("password").value = "";
-    await loadDonations();
-  } catch (error) {
-    message.textContent = error.message;
-    alert(error.message);
-  }
-};
+$("loginForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  $("loginButton").disabled = true;
 
-document.getElementById("refreshBtn").onclick = loadDonations;
-
-document.getElementById("logoutBtn").onclick = async () => {
-  try {
-    await api("/api/admin/logout", {
-      method: "POST",
-      body: "{}"
+  try{
+    await api("/api/admin/login",{
+      method:"POST",
+      body:JSON.stringify({password:$("password").value})
     });
-  } finally {
-    dashboard.hidden = true;
-    loginBox.hidden = false;
-    list.replaceChildren();
-    message.textContent = "";
+    $("password").value = "";
+    await refreshDashboard();
+  }catch(error){
+    setMessage(error.message);
+  }finally{
+    $("loginButton").disabled = false;
   }
-};
+});
+
+$("refreshButton").addEventListener("click",refreshDashboard);
+
+$("logoutButton").addEventListener("click",async()=>{
+  try{
+    await api("/api/admin/logout",{
+      method:"POST",
+      body:JSON.stringify({})
+    });
+    $("dashboard").classList.add("hidden");
+    $("loginCard").classList.remove("hidden");
+    setMessage("Umetoka kwenye akaunti.");
+  }catch(error){
+    setMessage(error.message);
+  }
+});
+
+$("mediaFiles").addEventListener("change",()=>{
+  const preview = $("mediaPreview");
+  preview.replaceChildren();
+
+  Array.from($("mediaFiles").files || []).forEach(file=>{
+    const url = URL.createObjectURL(file);
+    let element;
+
+    if(file.type.startsWith("image/")){
+      element = document.createElement("img");
+      element.alt = file.name;
+    }else if(file.type.startsWith("video/")){
+      element = document.createElement("video");
+      element.controls = true;
+    }else{
+      return;
+    }
+
+    element.src = url;
+    preview.appendChild(element);
+  });
+
+  $("mediaStatus").textContent =
+    "Haya ni maonyesho ya awali kwenye kifaa hiki tu; faili bado hazijahifadhiwa kwenye seva.";
+});
+
+$("mediaForm").addEventListener("submit",event=>{
+  event.preventDefault();
+  $("mediaStatus").textContent =
+    "Kupakia na kuhifadhi picha/video bado kunahitaji endpoint ya backend na hifadhi ya faili. Hakuna faili lililotumwa.";
+});
+
+refreshDashboard();
 </script>
 </body>
 </html>
