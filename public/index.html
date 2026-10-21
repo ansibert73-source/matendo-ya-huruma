@@ -279,6 +279,69 @@
   </div>
 
   <section id="about">
+<section id="gallery" class="section">
+  <div class="container">
+    <h2 data-i18n="galleryTitle">
+      Picha na Video za Matendo ya Huruma
+    </h2>
+
+    <p data-i18n="galleryIntro">
+      Tunaunganisha mioyo yenye huruma ili kusaidia watoto yatima
+      na watu wenye uhitaji. Ungana nasi kueneza upendo na matumaini.
+    </p>
+
+    <div class="gallery-grid">
+      <article class="gallery-card">
+        <img
+          src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=75"
+          alt="Children in a community"
+          loading="lazy"
+          style="width:100%;border-radius:12px;"
+        >
+        <h3 data-i18n="galleryPhoto1">Upendo na Matumaini</h3>
+        <p data-i18n="galleryPhoto1Text">
+          Kila mtoto anastahili upendo, uangalizi na nafasi ya maisha bora.
+        </p>
+      </article>
+
+      <article class="gallery-card">
+        <img
+          src="https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=900&q=75"
+          alt="Community volunteers helping others"
+          loading="lazy"
+          style="width:100%;border-radius:12px;"
+        >
+        <h3 data-i18n="galleryPhoto2">Kusaidiana</h3>
+        <p data-i18n="galleryPhoto2Text">
+          Tukiungana, tunaweza kuleta mabadiliko katika jamii.
+        </p>
+      </article>
+    </div>
+
+    <div class="video-card" style="margin-top:28px;">
+      <h3 data-i18n="videoTitle">Video ya Matendo ya Huruma</h3>
+      <p data-i18n="videoIntro">
+        Tazama utambulisho wetu na ujumbe wa kusaidiana.
+      </p>
+
+      <div style="position:relative;width:100%;padding-top:56.25%;">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
+          title="Matendo ya Huruma introduction video"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:12px;"
+        ></iframe>
+      </div>
+
+      <p data-i18n="videoNote">
+        Video yetu rasmi itawekwa hapa baada ya kutengenezwa.
+      </p>
+    </div>
+  </div>
+</section>
+
     <div class="section-heading">
       <h2 data-i18n="aboutTitle">Kuhusu Matendo ya Huruma</h2>
       <p data-i18n="aboutText">Tunaamini kuwa kusaidiana kunajenga jamii yenye matumaini.</p>
@@ -418,6 +481,16 @@
 
 <script>
 const translations = {
+galleryTitle: "Picha na Video za Matendo ya Huruma",
+galleryIntro: "Tunaunganisha mioyo yenye huruma ili kusaidia watoto yatima na watu wenye uhitaji.",
+galleryPhoto1: "Upendo na Matumaini",
+galleryPhoto1Text: "Kila mtoto anastahili upendo, uangalizi na nafasi ya maisha bora.",
+galleryPhoto2: "Kusaidiana",
+galleryPhoto2Text: "Tukiungana, tunaweza kuleta mabadiliko katika jamii.",
+videoTitle: "Video ya Matendo ya Huruma",
+videoIntro: "Tazama utambulisho wetu na ujumbe wa kusaidiana.",
+videoNote: "Video yetu rasmi itawekwa hapa baada ya kutengenezwa.",
+
   sw: {
     home:"Nyumbani",about:"Kuhusu sisi",donate:"Changia",donors:"Wachangiaji",
     tag:"UPENDO • MATUMAINI • HURUMA",heroTitle:"Tushirikiane Kubadilisha Maisha",
@@ -561,7 +634,17 @@ document.querySelectorAll(".copy-btn").forEach(btn => {
     const value = btn.dataset.copy;
     try {
       await navigator.clipboard.writeText(value);
-      btn.textContent = currentLanguage === "en" ? "Copied!" :
+      btn.textContent = currentLanguage ===
+galleryTitle: "Matendo ya Huruma Photo and Video Gallery",
+galleryIntro: "We bring compassionate people together to support orphans and people in need.",
+galleryPhoto1: "Love and Hope",
+galleryPhoto1Text: "Every child deserves love, care, and the opportunity for a better life.",
+galleryPhoto2: "Helping One Another",
+galleryPhoto2Text: "Together, we can make a positive difference in our communities.",
+videoTitle: "Matendo ya Huruma Video",
+videoIntro: "Discover our mission and our message of compassion.",
+videoNote: "Our official video will appear here once it has been created.",
+ "en" ? "Copied!" :
         currentLanguage === "fr" ? "Copié !" :
         currentLanguage === "zh" ? "已复制！" : "Imenakiliwa!";
       setTimeout(() => {
