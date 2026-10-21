@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Matendo ya Huruma</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 18px;
+      background: #f2f7f3;
+      color: #20372a;
+    }
+    main { max-width: 850px; margin: auto; }
+    section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 15px 0;
+      box-shadow: 0 2px 8px #0001;
+    }
+    h1, h2 { color: #087443; }
+    input, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin: 7px 0;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+    input { border: 1px solid #bbb; }
+    button {
+      border: 0;
+      color: white;
+      background: #087443;
+      cursor: pointer;
+    }
+    .reject { background: #a52c2c; }
+    .item {
+      border: 1px solid #ddd;
+      padding: 14px;
+      margin: 12px 0;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+    .muted { color: #59665e; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Matendo ya Huruma</h1>
+  <p class="muted">Eneo la msimamizi — Admin Dashboard</p>
+
+  <section id="loginBox">
+    <h2>Ingia Admin</h2>
+    <label for="password">Nenosiri la Admin</label>
+    <input id="password" type="password" autocomplete="current-password"
+      placeholder="Weka nenosiri lako">
+    <button id="loginBtn">Ingia</button>
+  </section>
+
+  <section id="dashboard" hidden>
+    <h2>Muhtasari wa Michango</h2>
+    <p>Jumla ya michango iliyothibitishwa:</p>
+    <h2 id="total">TSh 0</h2>
+    <button id="refreshBtn">Onyesha upya</button>
+    <button id="logoutBtn" class="reject">Toka</button>
+    <p id="message" role="status"></p>
+    <div id="donations"></div>
+  </section>
+</main>
+
+<script>
+const loginBox = document.getElementById("loginBox");
+const dashboard = document.getElementById("dashboard");
+const message = document.getElementById("message");
+const list = document.getElementById("donations");
+const money = n => "TSh " + Number(n).toLocaleString("en-US");
+
+async function api(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Hitilafu imetokea.");
+  return data;
+}
+
+async function loadDonations() {
+  message.textContent = "Inapakia michango...";
+  try {
+    const data = await api("/api/admin/donations");
+    document.getElementById("total").textContent =
+      money(data.totalVerified);
+    list.replaceChildren();
+
+    if (!data.donations.length) {
+      list.textContent = "Bado hakuna michango.";
+    }
+
+    data.donations.slice().reverse().forEach(d => {
+      const item = document.createElement("div");
+      item.className = "item";
+
+      const title = document.createElement("h3");
+      title.textContent = d.name;
+      item.appendChild(title);
+
+      const details = document.createElement("p");
+      details.textContent =
+        money(d.amount) + " | " + d.paymentMethod +
+        " | Hali: " + d.status;
+      item.appendChild(details);
+
+      const reference = document.createElement("p");
+      reference.textContent = "Namba ya kumbukumbu: " + (d.reference || "Haijatolewa");
+      item.appendChild(reference);
+
+      const date = document.createElement("p");
+      date.textContent = "Tarehe: " + d.createdAt;
+      item.appendChild(date);
+
+      if (d.status === "pending") {
+        const verify = document.createElement("button");
+        verify.textContent = "Thibitisha malipo";
+        verify.onclick = () => review(d.id, "verify");
+        item.appendChild(verify);
+
+        const reject = document.createElement("button");
+        reject.textContent = "Kataa mchango";
+        reject.className = "reject";
+        reject.onclick = () => review(d.id, "reject");
+        item.appendChild(reject);
+      }
+
+      list.appendChild(item);
+    });
+    message.textContent =
+      "Taarifa zimepakiwa. Hakikisha fedha zimeingia kabla ya kuthibitisha.";
+  } catch (error) {
+    message.textContent = error.message;
+    if (error.message === "Admin login required.") {
+      dashboard.hidden = true;
+      loginBox.hidden = false;
+    }
+  }
+}
+
+async function review(id, action) {
+  if (!confirm("Je, umekagua malipo kwenye akaunti na kuthibitisha kuwa fedha zimepokelewa?")) {
+    return;
+  }
+  try {
+    await api("/api/admin/donations/" + encodeURIComponent(id) + "/" + action, {
+      method: "POST",
+      body: "{}"
+    });
+    await loadDonations();
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
+
+document.getElementById("loginBtn").onclick = async () => {
+  message.textContent = "";
+  try {
+    await api("/api/admin/login", {
+      method: "POST",
+      body: JSON.stringify({
+        password: document.getElementById("password").value
+      })
+    });
+    loginBox.hidden = true;
+    dashboard.hidden = false;
+    document.getElementById("password").value = "";
+    await loadDonations();
+  } catch (error) {
+    message.textContent = error.message;
+    alert(error.message);
+  }
+};
+
+document.getElementById("refreshBtn").onclick = loadDonations;
+
+document.getElementById("logoutBtn").onclick = async () => {
+  try {
+    await api("/api/admin/logout", {
+      method: "POST",
+      body: "{}"
+    });
+  } finally {
+    dashboard.hidden = true;
+    loginBox.hidden = false;
+    list.replaceChildren();
+    message.textContent = "";
+  }
+};
+</script>
+</body>
+</html>
