@@ -679,7 +679,36 @@ $("donationForm").addEventListener("submit", async event => {
     button.disabled = false;
   }
 });
+const shareButton = $("shareWebsite");
 
+if (shareButton) {
+  shareButton.addEventListener("click", async () => {
+    const messages = {
+      sw: "Karibu Matendo ya Huruma! Ungana nasi kusaidia watoto yatima na watu wenye uhitaji. Kila mchango wa hiari una maana. Tembelea tovuti yetu:",
+      en: "Welcome to Matendo ya Huruma! Join us in supporting orphans and people in need. Every voluntary contribution matters. Visit our website:"
+    };
+
+    const url = window.location.origin;
+    const message =
+      (currentLanguage === "en" ? messages.en : messages.sw) +
+      "\n" + url;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Matendo ya Huruma",
+          text: message
+        });
+      } else {
+        window.prompt("Nakili ujumbe huu ili kuusambaza:", message);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        window.prompt("Nakili ujumbe huu ili kuusambaza:", message);
+      }
+    }
+  });
+}
 $("year").textContent = new Date().getFullYear();
 translatePage("sw");
 loadDonations();
