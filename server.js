@@ -1,3 +1,4 @@
+
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
@@ -6,106 +7,108 @@ const fs = require("fs/promises");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const SESSION_SECRET = process.env.SESSION_SECRET;
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "donations.json");
-const SESSION_DURATION = 2 * 60 * 60 * 1000;
+const SECRET = process.env.SESSION_SECRET;
+const DIR = process.env.DATA_DIR || path.join(__dirname, "data");
+const DF = path.join(DIR, "donations.json");
+const RF = path.join(DIR, "reports.json");
 
-if (!ADMIN_PASSWORD || !SESSION_SECRET || SESSION_SECRET.length < 32) {
+if (!ADMIN_PASSWORD || !SECRET || SECRET.length < 32) {
   throw new Error("Set ADMIN_PASSWORD and SESSION_SECRET (minimum 32 characters).");
 }
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "20kb" }));
+app.use(express.json({ limit: "30kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 let donations = [];
-let writeQueue = Promise.resolve();
-const loginAttempts = new Map();
+let reports = [];
+let queue = Promise.resolve();
+const attempts = new Map();
 
-async function loadDonations() {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-
+async function readFileData(file) {
   try {
-    const data = await fs.readFile(DATA_FILE, "utf8");
-    donations = JSON.parse(data);
-    if (!Array.isArray(donations)) throw new Error("Invalid donations data.");
+    const data = JSON.parse(await fs.readFile(file, "utf8"));
+    if (!Array.isArray(data)) throw new Error("Invalid data");
+    return data;
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
-    donations = [];
-    await fs.writeFile(DATA_FILE, "[]", "utf8");
+    await fs.writeFile(file, "[]");
+    return [];
   }
 }
 
-function saveDonations() {
-  writeQueue = writeQueue.then(async () => {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    const temp = DATA_FILE + ".tmp";
-    await fs.writeFile(temp, JSON.stringify(donations, null, 2), "utf8");
-    await fs.rename(temp, DATA_FILE);
+async function loadData() {
+  await fs.mkdir(DIR, { recursive: true });
+  donations = await readFileData(DF);
+  reports = await readFileData(RF);
+}
+
+function saveData(file, data) {
+  queue = queue.then(async () => {
+    await fs.mkdir(DIR, { recursive: true });
+    const temp = file + ".tmp";
+    await fs.writeFile(temp, JSON.stringify(data, null, 2));
+    await fs.rename(temp, file);
   });
-  return writeQueue;
+  return queue;
+}
+
+function totalVerified() {
+  return donations
+    .filter(d => d.status === "verified")
+    .reduce((sum, d) => sum + d.amount, 0);
 }
 
 function sign(value) {
-  return crypto.createHmac("sha256", SESSION_SECRET).update(value).digest("hex");
+  return crypto.createHmac("sha256", SECRET)
+    .update(value)
+    .digest("hex");
 }
 
 function createSession() {
   const payload = Buffer.from(JSON.stringify({
-    expires: Date.now() + SESSION_DURATION
+    expires: Date.now() + 7200000
   })).toString("base64url");
 
   return payload + "." + sign(payload);
 }
 
-function validSession(req) {
+function isAdmin(req) {
   const cookie = (req.headers.cookie || "")
     .split("; ")
     .find(item => item.startsWith("mh_admin="));
 
   if (!cookie) return false;
 
-  const parts = cookie.slice("mh_admin=".length).split(".");
+  const parts = cookie.slice(9).split(".");
   if (parts.length !== 2) return false;
 
-  const [payload, signature] = parts;
-  const expected = sign(payload);
-  const a = Buffer.from(signature);
-  const b = Buffer.from(expected);
+  const expected = Buffer.from(sign(parts[0]));
+  const actual = Buffer.from(parts[1]);
 
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
+  if (
+    expected.length !== actual.length ||
+    !crypto.timingSafeEqual(expected, actual)
+  ) return false;
 
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    return Number(data.expires) > Date.now();
+    const payload = JSON.parse(
+      Buffer.from(parts[0], "base64url").toString()
+    );
+    return payload.expires > Date.now();
   } catch {
     return false;
   }
 }
 
 function requireAdmin(req, res, next) {
-  if (!validSession(req)) {
-    return res.status(401).json({ error: "Admin login required." });
+  if (!isAdmin(req)) {
+    return res.status(401).json({
+      error: "Admin login required."
+    });
   }
   next();
-}
-
-function verifiedTotal() {
-  return donations
-    .filter(d => d.status === "verified")
-    .reduce((sum, d) => sum + d.amount, 0);
-}
-
-function publicDonation(d) {
-  return {
-    name: d.publicConsent ? d.name : "",
-    amount: d.amount,
-    showName: d.publicConsent,
-    verifiedAt: d.verifiedAt,
-    createdAt: d.createdAt
-  };
 }
 
 app.get("/", (req, res) => {
@@ -116,34 +119,36 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
-// Submit a donation for manual verification.
+/* Fomu ya mchango */
 app.post("/api/donations", async (req, res, next) => {
   try {
-    const { name, amount, paymentMethod, reference, showName, publicConsent } = req.body || {};
-    const value = Number(amount);
+    const body = req.body || {};
+    const amount = Number(body.amount);
 
     if (
-      typeof name !== "string" ||
-      name.trim().length < 2 ||
-      name.trim().length > 100 ||
-      !Number.isFinite(value) ||
-      value < 100 ||
-      value > 1000000000 ||
-      typeof paymentMethod !== "string" ||
-      paymentMethod.trim().length < 2 ||
-      paymentMethod.length > 60 ||
-      (reference !== undefined && typeof reference !== "string")
+      typeof body.name !== "string" ||
+      body.name.trim().length < 2 ||
+      body.name.length > 100 ||
+      !Number.isFinite(amount) ||
+      amount < 100 ||
+      amount > 1000000000 ||
+      typeof body.paymentMethod !== "string" ||
+      body.paymentMethod.trim().length < 2 ||
+      body.paymentMethod.length > 60 ||
+      typeof (body.reference || "") !== "string"
     ) {
-      return res.status(400).json({ error: "Check your donation details." });
+      return res.status(400).json({
+        error: "Tafadhali hakiki jina, kiasi na njia ya malipo."
+      });
     }
 
     const donation = {
       id: crypto.randomUUID(),
-      name: name.trim(),
-      amount: value,
-      paymentMethod: paymentMethod.trim(),
-      reference: typeof reference === "string" ? reference.trim().slice(0, 100) : "",
-      publicConsent: showName === true || publicConsent === true,
+      name: body.name.trim(),
+      amount,
+      paymentMethod: body.paymentMethod.trim(),
+      reference: (body.reference || "").trim().slice(0, 100),
+      publicConsent: body.showName === true || body.publicConsent === true,
       status: "pending",
       createdAt: new Date().toISOString(),
       verifiedAt: null
@@ -152,66 +157,135 @@ app.post("/api/donations", async (req, res, next) => {
     donations.push(donation);
 
     try {
-      await saveDonations();
+      await saveData(DF, donations);
     } catch (error) {
       donations = donations.filter(d => d.id !== donation.id);
       throw error;
     }
 
     res.status(201).json({
-      message: "Donation submitted for review.",
-      id: donation.id,
-      status: donation.status
+      message: "Taarifa zimepokelewa na zinasubiri uhakiki."
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Public endpoint: only verified donations and consented names are shown.
+/* Jumla ya michango iliyothibitishwa pekee */
 app.get("/api/donations", (req, res) => {
   const verified = donations.filter(d => d.status === "verified");
 
   res.set("Cache-Control", "no-store");
   res.json({
-    total: verifiedTotal(),
-    totalAmount: verifiedTotal(),
+    total: totalVerified(),
+    totalAmount: totalVerified(),
     donationCount: verified.length,
-    donations: verified.map(publicDonation)
+    donations: verified.map(d => ({
+      name: d.publicConsent ? d.name : "",
+      showName: d.publicConsent,
+      amount: d.amount,
+      createdAt: d.createdAt
+    }))
   });
 });
 
+/* Fomu ya kuripoti watu au maeneo yenye uhitaji */
+app.post("/api/reports", async (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const fields = [
+      ["reporterName", 2, 100],
+      ["contact", 5, 100],
+      ["location", 2, 150],
+      ["needType", 2, 80],
+      ["details", 10, 1500]
+    ];
+
+    for (const [key, min, max] of fields) {
+      if (
+        typeof body[key] !== "string" ||
+        body[key].trim().length < min ||
+        body[key].length > max
+      ) {
+        return res.status(400).json({
+          error: "Jaza taarifa zote zinazohitajika kwa usahihi."
+        });
+      }
+    }
+
+    const report = {
+      id: crypto.randomUUID(),
+      reporterName: body.reporterName.trim(),
+      contact: body.contact.trim(),
+      location: body.location.trim(),
+      needType: body.needType.trim(),
+      details: body.details.trim(),
+      consentContact: body.consentContact === true,
+      status: "new",
+      createdAt: new Date().toISOString()
+    };
+
+    reports.push(report);
+
+    try {
+      await saveData(RF, reports);
+    } catch (error) {
+      reports = reports.filter(r => r.id !== report.id);
+      throw error;
+    }
+
+    res.status(201).json({
+      message: "Taarifa imepokelewa na itapitiwa."
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/* Kuingia kwa msimamizi */
 app.post("/api/admin/login", (req, res) => {
   const ip = req.ip;
-  const attempt = loginAttempts.get(ip) || { count: 0, until: 0 };
+  const record = attempts.get(ip) || { count: 0, until: 0 };
 
-  if (Date.now() < attempt.until) {
-    return res.status(429).json({ error: "Too many attempts. Try again later." });
+  if (Date.now() < record.until) {
+    return res.status(429).json({
+      error: "Majaribio mengi. Jaribu tena baadaye."
+    });
   }
 
-  const password = typeof req.body?.password === "string" ? req.body.password : "";
-  const a = Buffer.from(password);
-  const b = Buffer.from(ADMIN_PASSWORD);
-  const matches = a.length === b.length && crypto.timingSafeEqual(a, b);
+  const password = typeof req.body?.password === "string"
+    ? req.body.password
+    : "";
 
-  if (!matches) {
-    attempt.count++;
-    if (attempt.count >= 5) {
-      attempt.count = 0;
-      attempt.until = Date.now() + 15 * 60 * 1000;
+  const actual = Buffer.from(password);
+  const expected = Buffer.from(ADMIN_PASSWORD);
+
+  if (
+    actual.length !== expected.length ||
+    !crypto.timingSafeEqual(actual, expected)
+  ) {
+    record.count++;
+
+    if (record.count >= 5) {
+      record.count = 0;
+      record.until = Date.now() + 900000;
     }
-    loginAttempts.set(ip, attempt);
-    return res.status(401).json({ error: "Incorrect password." });
+
+    attempts.set(ip, record);
+
+    return res.status(401).json({
+      error: "Nenosiri si sahihi."
+    });
   }
 
-  loginAttempts.delete(ip);
+  attempts.delete(ip);
 
   res.setHeader(
     "Set-Cookie",
     `mh_admin=${createSession()}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=7200`
   );
 
-  res.json({ message: "Login successful." });
+  res.json({ message: "Umeingia." });
 });
 
 app.post("/api/admin/logout", (req, res) => {
@@ -219,92 +293,132 @@ app.post("/api/admin/logout", (req, res) => {
     "Set-Cookie",
     "mh_admin=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0"
   );
-
-  res.json({ message: "Logged out." });
+  res.json({ message: "Umetoka." });
 });
 
+/* Msimamizi anaona michango yote */
 app.get("/api/admin/donations", requireAdmin, (req, res) => {
-  res.set("Cache-Control", "no-store");
   res.json({
     donations,
-    totalVerified: verifiedTotal()
+    totalVerified: totalVerified()
   });
 });
 
-app.post("/api/admin/donations/:id/verify", requireAdmin, async (req, res, next) => {
-  try {
-    const donation = donations.find(d => d.id === req.params.id);
-
-    if (!donation) {
-      return res.status(404).json({ error: "Donation not found." });
-    }
-
-    if (donation.status !== "pending") {
-      return res.status(409).json({ error: "Donation has already been reviewed." });
-    }
-
-    // Verify the actual payment in your mobile-money or bank account first.
-    donation.status = "verified";
-    donation.verifiedAt = new Date().toISOString();
-
+/* Kuthibitisha au kukataa mchango */
+app.post(
+  "/api/admin/donations/:id/:action",
+  requireAdmin,
+  async (req, res, next) => {
     try {
-      await saveDonations();
-    } catch (error) {
-      donation.status = "pending";
-      donation.verifiedAt = null;
-      throw error;
-    }
+      const donation = donations.find(d => d.id === req.params.id);
 
-    res.json({
-      message: "Donation verified.",
-      donation,
-      totalVerified: verifiedTotal()
+      if (!donation) {
+        return res.status(404).json({
+          error: "Mchango haujapatikana."
+        });
+      }
+
+      if (donation.status !== "pending") {
+        return res.status(409).json({
+          error: "Tayari umekaguliwa."
+        });
+      }
+
+      if (!["verify", "reject"].includes(req.params.action)) {
+        return res.status(400).json({
+          error: "Kitendo si sahihi."
+        });
+      }
+
+      const oldStatus = donation.status;
+      const oldDate = donation.verifiedAt;
+
+      donation.status = req.params.action === "verify"
+        ? "verified"
+        : "rejected";
+
+      donation.verifiedAt = donation.status === "verified"
+        ? new Date().toISOString()
+        : null;
+
+      try {
+        await saveData(DF, donations);
+      } catch (error) {
+        donation.status = oldStatus;
+        donation.verifiedAt = oldDate;
+        throw error;
+      }
+
+      res.json({
+        message: "Hali ya mchango imesasishwa.",
+        totalVerified: totalVerified()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/* Msimamizi anaona taarifa za uhitaji */
+app.get("/api/admin/reports", requireAdmin, (req, res) => {
+  res.json({ reports });
+});
+
+/* Kubadilisha hali ya taarifa ya uhitaji */
+app.post(
+  "/api/admin/reports/:id/review",
+  requireAdmin,
+  async (req, res, next) => {
+    try {
+      const report = reports.find(r => r.id === req.params.id);
+      const status = req.body?.status;
+
+      if (!report) {
+        return res.status(404).json({
+          error: "Taarifa haijapatikana."
+        });
+      }
+
+      if (!["new", "reviewing", "resolved", "closed"].includes(status)) {
+        return res.status(400).json({
+          error: "Hali si sahihi."
+        });
+      }
+
+      const oldStatus = report.status;
+      report.status = status;
+      report.updatedAt = new Date().toISOString();
+
+      try {
+        await saveData(RF, reports);
+      } catch (error) {
+        report.status = oldStatus;
+        throw error;
+      }
+
+      res.json({ message: "Hali imesasishwa." });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.use((error, req, res, next) => {
+  console.error(error);
+  if (!res.headersSent) {
+    res.status(500).json({
+      error: "Hitilafu ya seva. Jaribu tena baadaye."
     });
-  } catch (error) {
-    next(error);
   }
 });
 
-app.post("/api/admin/donations/:id/reject", requireAdmin, async (req, res, next) => {
-  try {
-    const donation = donations.find(d => d.id === req.params.id);
-
-    if (!donation) {
-      return res.status(404).json({ error: "Donation not found." });
-    }
-
-    if (donation.status !== "pending") {
-      return res.status(409).json({ error: "Donation has already been reviewed." });
-    }
-
-    donation.status = "rejected";
-
-    try {
-      await saveDonations();
-    } catch (error) {
-      donation.status = "pending";
-      throw error;
-    }
-
-    res.json({ message: "Donation rejected." });
-  } catch (error) {
-    next(error);
-  }
-});
-
-app.use((err, req, res, next) => {
-  console.error(err);
-  if (res.headersSent) return next(err);
-  res.status(500).json({ error: "Server error. Please try again." });
-});
-
-loadDonations()
+loadData()
   .then(() => {
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Matendo ya Huruma running on port ${PORT}`);
+      console.log("Matendo ya Huruma running on port " + PORT);
     });
   })
   .catch(error => {
-    console.error("Failed to load donations:", error);
+    console.error(error);
     process.exit(1);
   });
