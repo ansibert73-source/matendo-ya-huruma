@@ -1,12 +1,17 @@
+
 {
-"name": "matendo-ya-huruma",
-"version": "1.0.0",
-"description": "Matendo ya Huruma donation website",
-"main": "server.js",
-"scripts": {
-"start": "node server.js"
-},
-"dependencies": {
-"express": "^4.21.2"
+  "name": "matendo-ya-huruma",
+  "version": "1.0.0",
+  "description": "Tovuti ya Matendo ya Huruma kwa ajili ya michango na kusaidia watu wenye uhitaji.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
 }
-}
+
